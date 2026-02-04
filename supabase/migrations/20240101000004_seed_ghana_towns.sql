@@ -1,7 +1,7 @@
 -- OwnerView Ghana - Seed Ghana Towns Data
 -- Major towns and cities across all regions of Ghana
 
-INSERT INTO towns (name, region, country) VALUES
+INSERT INTO ownerview_gh_towns (name, region, country) VALUES
 -- Greater Accra Region
 ('Accra', 'Greater Accra', 'Ghana'),
 ('Tema', 'Greater Accra', 'Ghana'),

@@ -11,7 +11,7 @@ DECLARE
   result JSONB;
 BEGIN
   SELECT settings -> p_key INTO result
-  FROM org_settings
+  FROM ownerview_gh_org_settings
   WHERE org_id = p_org_id;
   
   RETURN COALESCE(result, p_default);
@@ -35,8 +35,8 @@ BEGIN
      AND (OLD.status IS NULL OR OLD.status = 'DRAFT') THEN
     
     -- Get org settings
-    SELECT settings INTO org_settings 
-    FROM org_settings
+    SELECT settings INTO ownerview_gh_org_settings 
+    FROM ownerview_gh_org_settings
     WHERE org_id = NEW.org_id;
     
     -- Determine required photos based on reason code
@@ -55,7 +55,7 @@ BEGIN
     -- Count attached photos
     SELECT COUNT(*)
     INTO photo_count
-    FROM attachment_links al
+    FROM ownerview_gh_attachment_links al
     WHERE al.parent_type = 'inventory_movement' 
       AND al.parent_id = NEW.id;
     
@@ -73,7 +73,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER enforce_adjustment_photos
-  BEFORE UPDATE OF status ON inventory_movements
+  BEFORE UPDATE OF status ON ownerview_gh_inventory_movements
   FOR EACH ROW
   EXECUTE FUNCTION check_adjustment_photo_requirement();
 
@@ -96,7 +96,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER enforce_theft_approval
-  BEFORE UPDATE OF status ON inventory_movements
+  BEFORE UPDATE OF status ON ownerview_gh_inventory_movements
   FOR EACH ROW
   EXECUTE FUNCTION check_theft_suspected_approval();
 
@@ -109,7 +109,7 @@ RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.movement_type = 'ADJUSTMENT' 
      AND NEW.reason_code = 'THEFT_SUSPECTED' THEN
-    INSERT INTO alerts (
+    INSERT INTO ownerview_gh_alerts (
       org_id,
       location_id,
       alert_type,
@@ -135,7 +135,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER alert_theft
-  AFTER INSERT ON inventory_movements
+  AFTER INSERT ON ownerview_gh_inventory_movements
   FOR EACH ROW
   EXECUTE FUNCTION alert_on_theft_suspected();
 
@@ -154,8 +154,8 @@ BEGIN
      AND (OLD.status IS NULL OR OLD.status = 'DRAFT') THEN
     
     -- Get org threshold
-    SELECT settings INTO org_settings 
-    FROM org_settings
+    SELECT settings INTO ownerview_gh_org_settings 
+    FROM ownerview_gh_org_settings
     WHERE org_id = NEW.org_id;
     
     threshold := COALESCE(
@@ -168,7 +168,7 @@ BEGIN
       -- Count attached documents
       SELECT COUNT(*)
       INTO photo_count
-      FROM attachment_links al
+      FROM ownerview_gh_attachment_links al
       WHERE al.parent_type = 'clearing_claim' 
         AND al.parent_id = NEW.id;
       
@@ -185,7 +185,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER enforce_clearing_photos
-  BEFORE UPDATE OF status ON clearing_claims
+  BEFORE UPDATE OF status ON ownerview_gh_clearing_claims
   FOR EACH ROW
   EXECUTE FUNCTION check_clearing_claim_photos();
 
@@ -206,11 +206,11 @@ BEGIN
   END IF;
   
   -- Update the claim total
-  UPDATE clearing_claims
+  UPDATE ownerview_gh_clearing_claims
   SET 
     total_amount = (
       SELECT COALESCE(SUM(amount), 0)
-      FROM clearing_claim_lines
+      FROM ownerview_gh_clearing_claim_lines
       WHERE claim_id = claim_id_to_update
     ),
     updated_at = now()
@@ -225,7 +225,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_claim_total
-  AFTER INSERT OR UPDATE OR DELETE ON clearing_claim_lines
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_clearing_claim_lines
   FOR EACH ROW
   EXECUTE FUNCTION update_clearing_claim_total();
 
@@ -246,16 +246,16 @@ BEGIN
   END IF;
   
   -- Update the sale totals
-  UPDATE sales
+  UPDATE ownerview_gh_sales
   SET 
     subtotal = (
       SELECT COALESCE(SUM(line_total), 0)
-      FROM sales_lines
+      FROM ownerview_gh_sales_lines
       WHERE sale_id = sale_id_to_update
     ),
     total = (
       SELECT COALESCE(SUM(line_total), 0)
-      FROM sales_lines
+      FROM ownerview_gh_sales_lines
       WHERE sale_id = sale_id_to_update
     ) + COALESCE(tax, 0),
     updated_at = now()
@@ -270,7 +270,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER update_sale_total
-  AFTER INSERT OR UPDATE OR DELETE ON sales_lines
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_sales_lines
   FOR EACH ROW
   EXECUTE FUNCTION update_sales_total();
 
@@ -292,7 +292,7 @@ BEGIN
   
   -- Log the change
   IF TG_OP = 'UPDATE' THEN
-    INSERT INTO audit_log (
+    INSERT INTO ownerview_gh_audit_log (
       org_id, 
       table_name, 
       record_id, 
@@ -310,7 +310,7 @@ BEGIN
       auth.uid()
     );
   ELSIF TG_OP = 'DELETE' THEN
-    INSERT INTO audit_log (
+    INSERT INTO ownerview_gh_audit_log (
       org_id, 
       table_name, 
       record_id, 
@@ -326,7 +326,7 @@ BEGIN
       auth.uid()
     );
   ELSIF TG_OP = 'INSERT' THEN
-    INSERT INTO audit_log (
+    INSERT INTO ownerview_gh_audit_log (
       org_id, 
       table_name, 
       record_id, 
@@ -353,22 +353,22 @@ $$ LANGUAGE plpgsql;
 
 -- Apply audit logging to sensitive tables
 CREATE TRIGGER audit_inventory_movements
-  AFTER INSERT OR UPDATE OR DELETE ON inventory_movements
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_inventory_movements
   FOR EACH ROW
   EXECUTE FUNCTION log_changes();
 
 CREATE TRIGGER audit_expenses
-  AFTER INSERT OR UPDATE OR DELETE ON expenses
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_expenses
   FOR EACH ROW
   EXECUTE FUNCTION log_changes();
 
 CREATE TRIGGER audit_clearing_claims
-  AFTER INSERT OR UPDATE OR DELETE ON clearing_claims
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_clearing_claims
   FOR EACH ROW
   EXECUTE FUNCTION log_changes();
 
 CREATE TRIGGER audit_sales
-  AFTER INSERT OR UPDATE OR DELETE ON sales
+  AFTER INSERT OR UPDATE OR DELETE ON ownerview_gh_sales
   FOR EACH ROW
   EXECUTE FUNCTION log_changes();
 
@@ -385,37 +385,37 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply to tables with updated_at columns
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON organizations
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_organizations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON locations
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_locations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON user_memberships
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_user_memberships
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON items
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_items
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON inventory_movements
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_inventory_movements
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON expenses
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_expenses
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON shipments
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_shipments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON clearing_claims
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_clearing_claims
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON sales
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_sales
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON alerts
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_alerts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_updated_at BEFORE UPDATE ON org_settings
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON ownerview_gh_org_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
@@ -455,7 +455,7 @@ BEGIN
     0
   )
   INTO balance
-  FROM inventory_movements
+  FROM ownerview_gh_inventory_movements
   WHERE item_id = p_item_id
     AND location_id = p_location_id
     AND status = 'POSTED'

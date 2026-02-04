@@ -5,34 +5,34 @@
 -- ENABLE RLS ON ALL TABLES
 -- ============================================================================
 
-ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE business_lines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE towns ENABLE ROW LEVEL SECURITY;
-ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE inventory_movements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE attachments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE attachment_links ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shipments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clearing_claims ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clearing_claim_lines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sales_lines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
-ALTER TABLE org_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_business_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_towns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_user_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_inventory_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_attachments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_attachment_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_shipments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_clearing_claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_clearing_claim_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_sales_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ownerview_gh_org_settings ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
 -- ORGANIZATIONS
 -- ============================================================================
 
-CREATE POLICY "Users see their org" ON organizations
+CREATE POLICY "Users see their org" ON ownerview_gh_organizations
   FOR SELECT
   USING (
     id IN (
-      SELECT org_id FROM user_memberships
+      SELECT org_id FROM ownerview_gh_user_memberships
       WHERE user_id = auth.uid() AND active = true
     )
   );
@@ -41,11 +41,11 @@ CREATE POLICY "Users see their org" ON organizations
 -- BUSINESS LINES
 -- ============================================================================
 
-CREATE POLICY "Users see their org business lines" ON business_lines
+CREATE POLICY "Users see their org business lines" ON ownerview_gh_business_lines
   FOR SELECT
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships
+      SELECT org_id FROM ownerview_gh_user_memberships
       WHERE user_id = auth.uid()
     )
   );
@@ -54,7 +54,7 @@ CREATE POLICY "Users see their org business lines" ON business_lines
 -- TOWNS (Public Read)
 -- ============================================================================
 
-CREATE POLICY "Towns are publicly readable" ON towns
+CREATE POLICY "Towns are publicly readable" ON ownerview_gh_towns
   FOR SELECT
   USING (true);
 
@@ -62,20 +62,20 @@ CREATE POLICY "Towns are publicly readable" ON towns
 -- LOCATIONS
 -- ============================================================================
 
-CREATE POLICY "Users see locations in their scope" ON locations
+CREATE POLICY "Users see locations in their scope" ON ownerview_gh_locations
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       -- OWNER sees all
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid() AND role = 'OWNER'
       )
       OR
       -- Others see only their assigned locations
       id IN (
-        SELECT location_id FROM user_memberships
+        SELECT location_id FROM ownerview_gh_user_memberships
         WHERE user_id = auth.uid() AND location_id IS NOT NULL
       )
     )
@@ -85,15 +85,15 @@ CREATE POLICY "Users see locations in their scope" ON locations
 -- USER MEMBERSHIPS
 -- ============================================================================
 
-CREATE POLICY "Users see their own memberships" ON user_memberships
+CREATE POLICY "Users see their own memberships" ON ownerview_gh_user_memberships
   FOR SELECT
   USING (user_id = auth.uid());
 
-CREATE POLICY "Owners manage memberships" ON user_memberships
+CREATE POLICY "Owners manage memberships" ON ownerview_gh_user_memberships
   FOR ALL
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships
+      SELECT org_id FROM ownerview_gh_user_memberships
       WHERE user_id = auth.uid() AND role = 'OWNER'
     )
   );
@@ -102,27 +102,27 @@ CREATE POLICY "Owners manage memberships" ON user_memberships
 -- ITEMS
 -- ============================================================================
 
-CREATE POLICY "Users see items in their org" ON items
+CREATE POLICY "Users see items in their org" ON ownerview_gh_items
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Managers can create items" ON items
+CREATE POLICY "Managers can create items" ON ownerview_gh_items
   FOR INSERT
   WITH CHECK (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid() 
       AND role IN ('OWNER', 'HQ_ADMIN', 'LOCATION_MANAGER')
     )
   );
 
-CREATE POLICY "Managers can update items" ON items
+CREATE POLICY "Managers can UPDATE ownerview_gh_items" ON ownerview_gh_items
   FOR UPDATE
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid() 
       AND role IN ('OWNER', 'HQ_ADMIN', 'LOCATION_MANAGER')
     )
@@ -132,43 +132,43 @@ CREATE POLICY "Managers can update items" ON items
 -- INVENTORY MOVEMENTS
 -- ============================================================================
 
-CREATE POLICY "Users see movements in their scope" ON inventory_movements
+CREATE POLICY "Users see movements in their scope" ON ownerview_gh_inventory_movements
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       -- OWNER sees all
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid() AND role = 'OWNER'
       )
       OR
       -- Others see only their locations
       location_id IN (
-        SELECT location_id FROM user_memberships
+        SELECT location_id FROM ownerview_gh_user_memberships
         WHERE user_id = auth.uid() AND location_id IS NOT NULL
       )
     )
   );
 
-CREATE POLICY "Staff can create movements" ON inventory_movements
+CREATE POLICY "Staff can create movements" ON ownerview_gh_inventory_movements
   FOR INSERT
   WITH CHECK (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND location_id IN (
-      SELECT location_id FROM user_memberships 
+      SELECT location_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
     )
     AND created_by = auth.uid()
   );
 
-CREATE POLICY "Managers can approve movements" ON inventory_movements
+CREATE POLICY "Managers can approve movements" ON ownerview_gh_inventory_movements
   FOR UPDATE
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'HQ_ADMIN', 'LOCATION_MANAGER')
       )
@@ -179,16 +179,16 @@ CREATE POLICY "Managers can approve movements" ON inventory_movements
 -- ATTACHMENTS
 -- ============================================================================
 
-CREATE POLICY "Users see attachments in their org" ON attachments
+CREATE POLICY "Users see attachments in their org" ON ownerview_gh_attachments
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Users can upload attachments" ON attachments
+CREATE POLICY "Users can upload attachments" ON ownerview_gh_attachments
   FOR INSERT
   WITH CHECK (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND uploaded_by = auth.uid()
   );
 
@@ -196,24 +196,24 @@ CREATE POLICY "Users can upload attachments" ON attachments
 -- ATTACHMENT LINKS
 -- ============================================================================
 
-CREATE POLICY "Users see attachment links in their org" ON attachment_links
+CREATE POLICY "Users see attachment links in their org" ON ownerview_gh_attachment_links
   FOR SELECT
   USING (
     attachment_id IN (
-      SELECT id FROM attachments 
+      SELECT id FROM ownerview_gh_attachments 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
 
-CREATE POLICY "Users can create attachment links" ON attachment_links
+CREATE POLICY "Users can create attachment links" ON ownerview_gh_attachment_links
   FOR INSERT
   WITH CHECK (
     attachment_id IN (
-      SELECT id FROM attachments 
+      SELECT id FROM ownerview_gh_attachments 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
@@ -222,43 +222,43 @@ CREATE POLICY "Users can create attachment links" ON attachment_links
 -- EXPENSES
 -- ============================================================================
 
-CREATE POLICY "Users see expenses in their scope" ON expenses
+CREATE POLICY "Users see expenses in their scope" ON ownerview_gh_expenses
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       -- OWNER sees all
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid() AND role = 'OWNER'
       )
       OR
       -- Others see only their locations
       location_id IN (
-        SELECT location_id FROM user_memberships
+        SELECT location_id FROM ownerview_gh_user_memberships
         WHERE user_id = auth.uid() AND location_id IS NOT NULL
       )
     )
   );
 
-CREATE POLICY "Staff can submit expenses" ON expenses
+CREATE POLICY "Staff can submit expenses" ON ownerview_gh_expenses
   FOR INSERT
   WITH CHECK (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND location_id IN (
-      SELECT location_id FROM user_memberships 
+      SELECT location_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
     )
     AND created_by = auth.uid()
   );
 
-CREATE POLICY "Managers can approve expenses" ON expenses
+CREATE POLICY "Managers can approve expenses" ON ownerview_gh_expenses
   FOR UPDATE
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'HQ_ADMIN', 'LOCATION_MANAGER', 'ACCOUNTANT')
       )
@@ -269,27 +269,27 @@ CREATE POLICY "Managers can approve expenses" ON expenses
 -- SHIPMENTS
 -- ============================================================================
 
-CREATE POLICY "Users see shipments in their org" ON shipments
+CREATE POLICY "Users see shipments in their org" ON ownerview_gh_shipments
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Authorized users can create shipments" ON shipments
+CREATE POLICY "Authorized users can create shipments" ON ownerview_gh_shipments
   FOR INSERT
   WITH CHECK (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
       AND role IN ('OWNER', 'HQ_ADMIN', 'CLEARING_AGENT')
     )
   );
 
-CREATE POLICY "Authorized users can update shipments" ON shipments
+CREATE POLICY "Authorized users can UPDATE ownerview_gh_shipments" ON ownerview_gh_shipments
   FOR UPDATE
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
       AND role IN ('OWNER', 'HQ_ADMIN', 'CLEARING_AGENT')
     )
@@ -299,28 +299,28 @@ CREATE POLICY "Authorized users can update shipments" ON shipments
 -- CLEARING CLAIMS
 -- ============================================================================
 
-CREATE POLICY "Users see clearing claims in their org" ON clearing_claims
+CREATE POLICY "Users see clearing claims in their org" ON ownerview_gh_clearing_claims
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Clearing agents can create claims" ON clearing_claims
+CREATE POLICY "Clearing agents can create claims" ON ownerview_gh_clearing_claims
   FOR INSERT
   WITH CHECK (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
       AND role IN ('OWNER', 'HQ_ADMIN', 'CLEARING_AGENT')
     )
     AND created_by = auth.uid()
   );
 
-CREATE POLICY "Owner approves clearing claims" ON clearing_claims
+CREATE POLICY "Owner approves clearing claims" ON ownerview_gh_clearing_claims
   FOR UPDATE
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
       AND role IN ('OWNER', 'HQ_ADMIN')
     )
@@ -330,24 +330,24 @@ CREATE POLICY "Owner approves clearing claims" ON clearing_claims
 -- CLEARING CLAIM LINES
 -- ============================================================================
 
-CREATE POLICY "Users see claim lines in their org" ON clearing_claim_lines
+CREATE POLICY "Users see claim lines in their org" ON ownerview_gh_clearing_claim_lines
   FOR SELECT
   USING (
     claim_id IN (
-      SELECT id FROM clearing_claims 
+      SELECT id FROM ownerview_gh_clearing_claims 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
 
-CREATE POLICY "Users can manage claim lines" ON clearing_claim_lines
+CREATE POLICY "Users can manage claim lines" ON ownerview_gh_clearing_claim_lines
   FOR ALL
   USING (
     claim_id IN (
-      SELECT id FROM clearing_claims 
+      SELECT id FROM ownerview_gh_clearing_claims 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
@@ -356,43 +356,43 @@ CREATE POLICY "Users can manage claim lines" ON clearing_claim_lines
 -- SALES
 -- ============================================================================
 
-CREATE POLICY "Users see sales in their scope" ON sales
+CREATE POLICY "Users see sales in their scope" ON ownerview_gh_sales
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       -- OWNER sees all
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid() AND role = 'OWNER'
       )
       OR
       -- Others see only their locations
       location_id IN (
-        SELECT location_id FROM user_memberships
+        SELECT location_id FROM ownerview_gh_user_memberships
         WHERE user_id = auth.uid() AND location_id IS NOT NULL
       )
     )
   );
 
-CREATE POLICY "Sales staff can create sales" ON sales
+CREATE POLICY "Sales staff can create sales" ON ownerview_gh_sales
   FOR INSERT
   WITH CHECK (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND location_id IN (
-      SELECT location_id FROM user_memberships 
+      SELECT location_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid()
     )
     AND created_by = auth.uid()
   );
 
-CREATE POLICY "Managers can approve sales" ON sales
+CREATE POLICY "Managers can approve sales" ON ownerview_gh_sales
   FOR UPDATE
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid()
         AND role IN ('OWNER', 'HQ_ADMIN', 'LOCATION_MANAGER')
       )
@@ -403,24 +403,24 @@ CREATE POLICY "Managers can approve sales" ON sales
 -- SALES LINES
 -- ============================================================================
 
-CREATE POLICY "Users see sales lines in their scope" ON sales_lines
+CREATE POLICY "Users see sales lines in their scope" ON ownerview_gh_sales_lines
   FOR SELECT
   USING (
     sale_id IN (
-      SELECT id FROM sales 
+      SELECT id FROM ownerview_gh_sales 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
 
-CREATE POLICY "Users can manage sales lines" ON sales_lines
+CREATE POLICY "Users can manage sales lines" ON ownerview_gh_sales_lines
   FOR ALL
   USING (
     sale_id IN (
-      SELECT id FROM sales 
+      SELECT id FROM ownerview_gh_sales 
       WHERE org_id IN (
-        SELECT org_id FROM user_memberships WHERE user_id = auth.uid()
+        SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
       )
     )
   );
@@ -429,30 +429,30 @@ CREATE POLICY "Users can manage sales lines" ON sales_lines
 -- ALERTS
 -- ============================================================================
 
-CREATE POLICY "Users see alerts in their scope" ON alerts
+CREATE POLICY "Users see alerts in their scope" ON ownerview_gh_alerts
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
     AND (
       -- OWNER sees all
       EXISTS (
-        SELECT 1 FROM user_memberships 
+        SELECT 1 FROM ownerview_gh_user_memberships 
         WHERE user_id = auth.uid() AND role = 'OWNER'
       )
       OR
       -- Others see only their location alerts
       location_id IN (
-        SELECT location_id FROM user_memberships
+        SELECT location_id FROM ownerview_gh_user_memberships
         WHERE user_id = auth.uid() AND location_id IS NOT NULL
       )
     )
   );
 
-CREATE POLICY "Owner can update alerts" ON alerts
+CREATE POLICY "Owner can UPDATE ownerview_gh_alerts" ON ownerview_gh_alerts
   FOR UPDATE
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid() AND role = 'OWNER'
     )
   );
@@ -461,11 +461,11 @@ CREATE POLICY "Owner can update alerts" ON alerts
 -- AUDIT LOG
 -- ============================================================================
 
-CREATE POLICY "Owner sees audit log" ON audit_log
+CREATE POLICY "Owner sees audit log" ON ownerview_gh_audit_log
   FOR SELECT
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid() AND role = 'OWNER'
     )
   );
@@ -474,17 +474,17 @@ CREATE POLICY "Owner sees audit log" ON audit_log
 -- ORG SETTINGS
 -- ============================================================================
 
-CREATE POLICY "Users see their org settings" ON org_settings
+CREATE POLICY "Users see their org settings" ON ownerview_gh_org_settings
   FOR SELECT
   USING (
-    org_id IN (SELECT org_id FROM user_memberships WHERE user_id = auth.uid())
+    org_id IN (SELECT org_id FROM ownerview_gh_user_memberships WHERE user_id = auth.uid())
   );
 
-CREATE POLICY "Owner updates org settings" ON org_settings
+CREATE POLICY "Owner updates org settings" ON ownerview_gh_org_settings
   FOR UPDATE
   USING (
     org_id IN (
-      SELECT org_id FROM user_memberships 
+      SELECT org_id FROM ownerview_gh_user_memberships 
       WHERE user_id = auth.uid() 
       AND role = 'OWNER'
       AND can_manage_settings = true
@@ -506,7 +506,7 @@ CREATE POLICY "Users upload to their org"
   WITH CHECK (
     bucket_id = 'attachments'
     AND (storage.foldername(name))[1] IN (
-      SELECT org_id::text FROM user_memberships WHERE user_id = auth.uid()
+      SELECT org_id::text FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
     )
   );
 
@@ -516,7 +516,7 @@ CREATE POLICY "Users read their org attachments"
   USING (
     bucket_id = 'attachments'
     AND (storage.foldername(name))[1] IN (
-      SELECT org_id::text FROM user_memberships WHERE user_id = auth.uid()
+      SELECT org_id::text FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
     )
   );
 
@@ -526,7 +526,7 @@ CREATE POLICY "Users update their org attachments"
   USING (
     bucket_id = 'attachments'
     AND (storage.foldername(name))[1] IN (
-      SELECT org_id::text FROM user_memberships WHERE user_id = auth.uid()
+      SELECT org_id::text FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
     )
   );
 
@@ -536,6 +536,6 @@ CREATE POLICY "Users delete their org attachments"
   USING (
     bucket_id = 'attachments'
     AND (storage.foldername(name))[1] IN (
-      SELECT org_id::text FROM user_memberships WHERE user_id = auth.uid()
+      SELECT org_id::text FROM ownerview_gh_user_memberships WHERE user_id = auth.uid()
     )
   );

@@ -2,7 +2,7 @@
 -- This creates a complete test organization with sample data
 
 -- Create demo organization
-INSERT INTO organizations (id, name, slug, currency)
+INSERT INTO ownerview_gh_organizations (id, name, slug, currency)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   'Ghana Multi-Business Holdings',
@@ -11,14 +11,14 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Create business lines
-INSERT INTO business_lines (id, org_id, name, slug, active) VALUES
+INSERT INTO ownerview_gh_business_lines (id, org_id, name, slug, active) VALUES
 ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001', 'Heavy Machinery', 'heavy-machinery', true),
 ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001', 'Car Spare Parts', 'spare-parts', true),
 ('00000000-0000-0000-0001-000000000003', '00000000-0000-0000-0000-000000000001', 'Mining Operations', 'mining', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create organization settings
-INSERT INTO org_settings (org_id, settings)
+INSERT INTO ownerview_gh_org_settings (org_id, settings)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   '{
@@ -52,7 +52,7 @@ VALUES (
 -- 
 -- Example SQL to add user memberships (replace with actual user_ids):
 -- 
--- INSERT INTO user_memberships (user_id, org_id, role, business_line_id, location_id, can_manage_settings, active)
+-- INSERT INTO ownerview_gh_user_memberships (user_id, org_id, role, business_line_id, location_id, can_manage_settings, active)
 -- VALUES
 -- -- Owner
 -- ('<owner-user-id>', '00000000-0000-0000-0000-000000000001', 'OWNER', NULL, NULL, true, true),
@@ -75,14 +75,14 @@ DECLARE
   takoradi_town_id UUID;
 BEGIN
   -- Get town IDs
-  SELECT id INTO accra_town_id FROM towns WHERE name = 'Accra' LIMIT 1;
-  SELECT id INTO tema_town_id FROM towns WHERE name = 'Tema' LIMIT 1;
-  SELECT id INTO kumasi_town_id FROM towns WHERE name = 'Kumasi' LIMIT 1;
-  SELECT id INTO obuasi_town_id FROM towns WHERE name = 'Obuasi' LIMIT 1;
-  SELECT id INTO takoradi_town_id FROM towns WHERE name = 'Sekondi-Takoradi' LIMIT 1;
+  SELECT id INTO accra_town_id FROM ownerview_gh_towns WHERE name = 'Accra' LIMIT 1;
+  SELECT id INTO tema_town_id FROM ownerview_gh_towns WHERE name = 'Tema' LIMIT 1;
+  SELECT id INTO kumasi_town_id FROM ownerview_gh_towns WHERE name = 'Kumasi' LIMIT 1;
+  SELECT id INTO obuasi_town_id FROM ownerview_gh_towns WHERE name = 'Obuasi' LIMIT 1;
+  SELECT id INTO takoradi_town_id FROM ownerview_gh_towns WHERE name = 'Sekondi-Takoradi' LIMIT 1;
 
   -- Create demo locations
-  INSERT INTO locations (org_id, business_line_id, town_id, name, type, address, active) VALUES
+  INSERT INTO ownerview_gh_locations (org_id, business_line_id, town_id, name, type, address, active) VALUES
   ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000002', accra_town_id, 'Accra Spare Parts Shop', 'Shop', 'Abossey Okai, Accra', true),
   ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000001', tema_town_id, 'Tema Machinery Warehouse', 'Warehouse', 'Industrial Area, Tema', true),
   ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000002', kumasi_town_id, 'Kumasi Spare Parts Branch', 'Shop', 'Suame Magazine, Kumasi', true),
@@ -92,7 +92,7 @@ BEGIN
 END $$;
 
 -- Create demo items
-INSERT INTO items (org_id, business_line_id, sku, name, description, category, unit, cost_price, selling_price, reorder_level, high_risk, active) VALUES
+INSERT INTO ownerview_gh_items (org_id, business_line_id, sku, name, description, category, unit, cost_price, selling_price, reorder_level, high_risk, active) VALUES
 -- Heavy Machinery
 ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000001', 'EXC-CAT-320', 'Caterpillar 320 Excavator', 'Heavy duty excavator', 'Excavators', 'unit', 450000.00, 550000.00, 1, true, true),
 ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000001', 'BLD-CAT-D6', 'Caterpillar D6 Bulldozer', 'Track-type bulldozer', 'Bulldozers', 'unit', 380000.00, 480000.00, 1, true, true),
