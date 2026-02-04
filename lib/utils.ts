@@ -14,21 +14,21 @@ export function formatCurrency(amount: number, currency: string = 'GHS'): string
 }
 
 export function formatDate(date: string | Date): string {
-  return new Intl.DateFormat('en-GH', {
+  return new Date(date).toLocaleDateString('en-GH', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(new Date(date))
+  })
 }
 
 export function formatDateTime(date: string | Date): string {
-  return new Intl.DateFormat('en-GH', {
+  return new Date(date).toLocaleString('en-GH', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(date))
+  })
 }
 
 export function formatRelativeTime(date: string | Date): string {

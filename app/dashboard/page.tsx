@@ -9,22 +9,27 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
 
   // Get user's organization memberships
-  const { data: memberships } = await supabase
-    .from('user_memberships')
-    .select(`
-      *,
-      organizations (
-        id,
-        name,
-        slug,
-        currency
-      )
-    `)
-    .eq('user_id', user?.id)
-    .eq('active', true)
+  let memberships: any = null
+  
+  if (user) {
+    const result = await supabase
+      .from('user_memberships')
+      .select(`
+        *,
+        organizations (
+          id,
+          name,
+          slug,
+          currency
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('active', true)
+    memberships = result.data
+  }
 
-  const userRole = memberships?.[0]?.role || 'Unknown'
-  const orgName = memberships?.[0]?.organizations?.name || 'No Organization'
+  const userRole = (memberships?.[0]?.role as string) || 'Unknown'
+  const orgName = (memberships?.[0]?.organizations as any)?.name || 'No Organization'
   const isOwner = userRole === 'OWNER'
 
   return (
