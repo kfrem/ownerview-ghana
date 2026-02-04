@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export default async function DashboardLayout({
@@ -7,21 +5,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
+  // Authentication temporarily disabled for development
+  const user = {
+    email: 'demo@ownerview.gh'
   }
 
   const handleSignOut = async () => {
     'use server'
-    const supabase = await createClient()
-    await supabase.auth.signOut()
-    redirect('/login')
+    // Sign out disabled during development
   }
 
   return (

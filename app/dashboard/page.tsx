@@ -1,36 +1,17 @@
-import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  // Get user's organization memberships
-  let memberships: any = null
-  
-  if (user) {
-    const result = await supabase
-      .from('user_memberships')
-      .select(`
-        *,
-        organizations (
-          id,
-          name,
-          slug,
-          currency
-        )
-      `)
-      .eq('user_id', user.id)
-      .eq('active', true)
-    memberships = result.data
+  // Demo data for development (authentication disabled)
+  const user = {
+    email: 'demo@ownerview.gh',
+    user_metadata: {
+      full_name: 'Demo User'
+    }
   }
 
-  const userRole = (memberships?.[0]?.role as string) || 'Unknown'
-  const orgName = (memberships?.[0]?.organizations as any)?.name || 'No Organization'
-  const isOwner = userRole === 'OWNER'
+  const userRole = 'OWNER'
+  const orgName = 'Ghana Multi-Business Holdings'
+  const isOwner = true
 
   return (
     <div className="space-y-6">
