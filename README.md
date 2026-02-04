@@ -9,6 +9,14 @@ A mobile-first Progressive Web App (PWA) for managing multi-business operations 
 **Deployment**: Vercel (recommended)  
 **Status**: ✅ Initial Setup Complete - Ready for Supabase Configuration
 
+## ⚠️ IMPORTANT: Database Table Prefix
+
+**All database tables use the prefix `ownerview_gh_`** to prevent conflicts when running multiple projects in the same Supabase instance.
+
+- ✅ Example: `ownerview_gh_organizations`, `ownerview_gh_items`, `ownerview_gh_sales`
+- 📚 **See**: `TABLE_PREFIX_SUMMARY.md` for complete guide
+- 🔧 **See**: `DATABASE_TABLE_PREFIX_GUIDE.md` for developer documentation
+
 ### Currently Completed Features
 
 - ✅ **Project Setup**: Next.js 15 with TypeScript and Tailwind CSS
@@ -92,19 +100,19 @@ The following features are defined in the database schema but need UI implementa
 
 ### Data Models and Storage
 
-**Primary Data Structures**:
-- **Organizations**: Multi-business entity container
-- **Business Lines**: Heavy Machinery, Spare Parts, Mining
-- **Locations**: Shops, Warehouses, Mine Sites (linked to Ghana towns)
-- **User Memberships**: Role-based access (OWNER, MANAGER, STAFF, etc.)
-- **Items**: Product catalog with SKU, pricing, risk flags
-- **Inventory Movements**: RECEIVE, ISSUE, ADJUSTMENT, COUNT, TRANSFER
-- **Attachments**: Photos and documents with links to parent records
-- **Expenses**: Business expenses with receipt requirements
-- **Shipments & Claims**: Import tracking with clearing costs
-- **Sales**: Transaction records with line items
-- **Alerts**: System-generated notifications
-- **Audit Log**: Complete change history
+**Primary Data Structures** (all prefixed with `ownerview_gh_`):
+- **ownerview_gh_organizations**: Multi-business entity container
+- **ownerview_gh_business_lines**: Heavy Machinery, Spare Parts, Mining
+- **ownerview_gh_locations**: Shops, Warehouses, Mine Sites (linked to Ghana towns)
+- **ownerview_gh_user_memberships**: Role-based access (OWNER, MANAGER, STAFF, etc.)
+- **ownerview_gh_items**: Product catalog with SKU, pricing, risk flags
+- **ownerview_gh_inventory_movements**: RECEIVE, ISSUE, ADJUSTMENT, COUNT, TRANSFER
+- **ownerview_gh_attachments**: Photos and documents with links to parent records
+- **ownerview_gh_expenses**: Business expenses with receipt requirements
+- **ownerview_gh_shipments & ownerview_gh_clearing_claims**: Import tracking with clearing costs
+- **ownerview_gh_sales**: Transaction records with line items
+- **ownerview_gh_alerts**: System-generated notifications
+- **ownerview_gh_audit_log**: Complete change history
 
 **Storage Services**:
 - **Database**: Supabase PostgreSQL (all structured data)
@@ -296,26 +304,28 @@ In Vercel dashboard:
 
 ## 🗄️ Database Schema
 
-### Core Tables
+### Core Tables (All prefixed with `ownerview_gh_`)
 
-- **organizations** - Business entities
-- **business_lines** - Heavy Machinery, Spare Parts, Mining
-- **towns** - Ghana towns reference (pre-seeded)
-- **locations** - Physical business locations
-- **user_memberships** - Role-based user access
-- **items** - Product catalog
-- **inventory_movements** - All inventory transactions
-- **attachments** - File storage references
-- **attachment_links** - Links files to records
-- **expenses** - Business expenses
-- **shipments** - Import shipments
-- **clearing_claims** - Clearing agent claims
-- **clearing_claim_lines** - Claim line items
-- **sales** - Sales transactions
-- **sales_lines** - Sale line items
-- **alerts** - System alerts
-- **audit_log** - Change history
-- **org_settings** - Owner-configurable settings
+- **ownerview_gh_organizations** - Business entities
+- **ownerview_gh_business_lines** - Heavy Machinery, Spare Parts, Mining
+- **ownerview_gh_towns** - Ghana towns reference (60+ pre-seeded)
+- **ownerview_gh_locations** - Physical business locations
+- **ownerview_gh_user_memberships** - Role-based user access
+- **ownerview_gh_items** - Product catalog
+- **ownerview_gh_inventory_movements** - All inventory transactions
+- **ownerview_gh_attachments** - File storage references
+- **ownerview_gh_attachment_links** - Links files to records
+- **ownerview_gh_expenses** - Business expenses
+- **ownerview_gh_shipments** - Import shipments
+- **ownerview_gh_clearing_claims** - Clearing agent claims
+- **ownerview_gh_clearing_claim_lines** - Claim line items
+- **ownerview_gh_sales** - Sales transactions
+- **ownerview_gh_sales_lines** - Sale line items
+- **ownerview_gh_alerts** - System alerts
+- **ownerview_gh_audit_log** - Change history
+- **ownerview_gh_org_settings** - Owner-configurable settings
+
+**📚 Note**: The `ownerview_gh_` prefix ensures zero conflicts when running multiple projects in the same Supabase instance. See `TABLE_PREFIX_SUMMARY.md` for details.
 
 ### Key Features
 
